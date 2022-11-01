@@ -22,12 +22,12 @@ Una arquitectura Load-Store es aquella en la que los datos requeridos por cierta
 <table>
 	<tr><th>Memory region</th><th>Description</th><th>Access via</th><th>Address range</th></tr>
 	<tr><td>Code</td><td>Normally flash SRAM or ROM</td><td>ICode and Dcode bus</td><td>0x00000000-0x1FFFFFFF</td></tr>
-	<tr><td>SRAM</td><td>On-chip SRAM, with bit-banding feature</td><td>System bus</td><td>0x00000000-0x1FFFFFFF</td></tr>
+	<tr><td>SRAM</td><td>On-chip SRAM, with bit-banding feature</td><td>System bus</td><td>0x20000000-0x3FFFFFFF</td></tr>
 	<tr><td>Peripheral</td><td>Normal peripherals, with bit-banding feature</td><td>System bus</td><td>0x40000000-0x5FFFFFFF</td></tr>
 	<tr><td>External RAM</td><td>External memory</td><td>System bus</td><td>0x60000000-0x9FFFFFFF</td></tr>
 	<tr><td>External device</td><td>External peripherals or shared memory</td><td>System bus</td><td>0xA0000000-0xDFFFFFFF</td></tr>
 	<tr><td>Private peripheral bus</td><td>System devices</td><td>System bus</td><td>0xE0000000-0xE00FFFFF</td></tr>
-	<tr><td>Vendor specific</td><td>-</td><td>-</td><td>0xE0100000-0xfFFFFFFF</td></tr>
+	<tr><td>Vendor specific</td><td>-</td><td>-</td><td>0xE0100000-0xFFFFFFFF</td></tr>
 </table>
 <table>
 	<tr><th>Memory region</th><th>Description</th><th>Address range</th></tr>
