@@ -453,7 +453,7 @@ static void productoEscalar12 (uint16_t * vectorIn, uint16_t * vectorOut, uint32
 	{
 		for(uint32_t i=0; i<longitud; i++)
 		{
-			vectorOut[i] = (vectorIn[i] * escalar) <= 4096 ? (vectorIn[i] * escalar) : 4096;
+			vectorOut[i] = (vectorIn[i] * escalar) <= 4095 ? (vectorIn[i] * escalar) : 4095;
 		}
 	}
 }
