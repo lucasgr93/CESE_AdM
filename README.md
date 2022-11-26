@@ -18,6 +18,8 @@ Se dice que el set de instrucciones Thumb permite mayor densidad de código porq
 Una arquitectura Load-Store es aquella en la que los datos requeridos por ciertas instrucciones son cargados en registros antes de ejecutar la instrucción, en vez de tener que buscarlas en memoria cuando esta se ejecuta.
 
 <b>4. ¿Cómo es el mapa de memoria de la familia?</b><br><br>
+Dado que la arquitectura de la familia consta de un bus de datos de 32 bits, se pueden direccionar hasta 4Gb. A continuación se detalla cómo está distribuida la memoria en diferentes sectores:
+
 <img src="https://images0.cnblogs.com/blog/268182/201309/13164849-f8ba72cb7d0542fd92603d045f8ecc33.gif" alt="Cortex-M3 & Cortex-M4 Memory Map">
 <table>
 	<tr><th>Memory region</th><th>Description</th><th>Access via</th><th>Address range</th></tr>
@@ -52,13 +54,37 @@ Una arquitectura Load-Store es aquella en la que los datos requeridos por cierta
 
 <b>5. ¿Qué ventajas presenta el uso de los “shadowed pointers” del PSP y el MSP?</b><br><br>
 
+Tanto MSP como PSP son particiones de la pila.
+MSP: Main Stack Pointer
+PSP: Processor Stack Pointer
+
+En bare-metal se utiliza el MSP como única pila. Mientras que en RTOS solo el kernel e interrupciones tiene acceso a el MSP, mientras que las "task" acceden a las PSP de cada tarea.
+Cada stack pointer tiene una capacidad determinada que puede ser modificada. Cada tarea solo puede acceder a su PSP y no al de otros ni al MSP.
+En RTOS la MPU (Memory Protection Unit) define qué parte de la pila puede acceder cada task.
+Para cada PSP y el MSP la función PUSH y POP maneja la pila referida a la tarea que se está ejecutando o el kernel, protegiendo al resto de las particiones de la pila.
+En caso de que una task esté corrupta no puede modificar otros PSP ni el MSP por lo que el error no se propaga. Tampoco una task puede modificar los PSP de otras task.
+
 <b>6. Describa los diferentes modos de privilegio y operación del Cortex M, sus relaciones y  como se conmuta de uno al otro. Describa un ejemplo en el que se pasa del modo  privilegiado a no privilegiado y nuevamente a privilegiado.</b><br><br>
+Los Cortex-M tienen 2 modos de operación: Modo Thread y modo Handler. Además, los procesadores pueden tener niveles de acceso privilegiado y no provilegiado. El nivel de acceso privilegiado puede acceder a todos los recursos del procesador, mientras que el no privilegiado tiene algunas zonas de memoria no accesibles, y algunas operaciones no disponibles.<br>
+
+Modos de operación:<br>
+<ul>
+  <li>Modo Handler: Cuando se ejecuta un exception handler tal como una ISR. Cuando el procesador está en handler mode, siempre tiene nivel de acceso privilegiado.</li>
+  <li>Modo Thread: Cuando se ejecuta código de programa de aplicación, el procesador puede estar con nivel de acceso privilegiado o no privilegiado. Esto se controla mediante un registro especial llamado CONTROL (más específicamente, el bit0 [nPRIV]). El programa puede cambiar de nivel de acceso privilegiado a no privilegiado, pero no puede pasar de no privilegiado a privilegiado. Si es necesario, el procesador tiene que usar un mecanismo de excepciones para manejar el cambio. Por defecto, los procesadores Cortex-M arrancan en modo Thread privilegiado.</li>
+</ul>
 
 <b>7. ¿Qué se entiende por modelo de registros ortogonal? Dé un ejemplo.</b><br><br>
+Los registros son ortogonales cuando cualquier instrucción aplicable a un registro es igualmente aplicable a otro registro. En los ARMv7, los registros r0 a r12 son ortogonales.
 
 <b>8. ¿Qué ventajas presenta el uso de instrucciones de ejecución condicional (IT)? Dé un  ejemplo.</b><br><br>
+El uso de instrucciones condicionales puede ayudar a mejorar la performance del código significativamente porque evita algunas de las penalidades de las instrucciones de salto y también reduce el número de instrucciones de salto. Por ejemplo, un bloque corto de código IF-THEN-ELSE que normalmente requiere de un salto condicional puede ser reemplazado por una simple instrucción IT, en la que se evalúa la condición y se ejecuta la instrucción en el mismo ciclo de reloj.
 
 <b>9. Describa brevemente las excepciones más prioritarias (reset, NMI, Hardfault).</b><br><br>
+<ul>
+  <li>Reset: Excepción por reset del micro. Prioridad más alta (-3).</li>
+  <li>NMI: Excepción no enmascarable. Prioridad (-2).</li>
+  <li>HardFault: Excepción por fallos de hardware. Prioridad (-3)</li>
+</ul>
 
 <b>10. Describa las funciones principales de la pila. ¿Cómo resuelve la arquitectura el llamado  a funciones y su retorno?</b><br><br>
 
