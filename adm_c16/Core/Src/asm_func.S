@@ -7,6 +7,7 @@
 .global asm_sum
 .global asm_zeros
 .global asm_productoEscalar32
+.global asm_productoEscalar16
 
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -38,6 +39,33 @@
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ Prototipo en "C":
+@   uint32_t asmSum (uint32_t firstOperand, uint32_t secondOperand)
+@
+@ Parametros recibidos:
+@   r0: firstOperand
+@   r1: secondOperand
+@
+@ Valor de retorno:
+@   r0: resultado de la suma de firstOperand y secondOperand
+@
+
+.thumb_func
+    asm_sum:
+        add r0, r1  @ r0 = r0 + r1
+        bx lr       @ vuelve adonde fue llamada (especificamente, si "pc"
+                    @ es la direccion, en el codigo del programa, de la
+                    @ instruccion "bl asm_sum" usada para saltar a
+                    @ esta funcion, entonces "lr" contiene ese "pc" + 4).
+                    @ el valor de retorno debe quedar en el registro r0.
+                    @ En este caso, r0 es el resultado de r0 + r1.
+
+        @ Otras alternativas para el retorno
+        @ mov pc,lr
+        @ bx lr
+        @ push {lr} ... pop {pc}
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ Prototipo en "C":
 @   void asm_productoEscalar32 (uint32_t* vectorIn, uint32_t* vectorOut, uint32_t longitud, uint32_t escalar)
 @
 @ Parametros recibidos:
@@ -56,30 +84,22 @@
 			bne asm_prod32_loop
 		bx lr
 
-
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ Prototipo en "C":
-@   uint32_t asmSum (uint32_t firstOperand, uint32_t secondOperand)
+@   void asm_productoEscalar16 (uint16_t* vectorIn, uint16_t* vectorOut, uint32_t longitud, uint32_t escalar)
 @
 @ Parametros recibidos:
-@   r0: firstOperand
-@   r1: secondOperand
-@
-@ Valor de retorno:
-@   r0: resultado de la suma de firstOperand y secondOperand
+@   r0: &vectorIn
+@   r1: &vectorOut
+@	r2: longitud
+@	r3: escalar
 @
 .thumb_func
-    asm_sum:
-        add r0, r1  @ r0 = r0 + r1
-        bx lr       @ vuelve adonde fue llamada (especificamente, si "pc"
-                    @ es la direccion, en el codigo del programa, de la
-                    @ instruccion "bl asm_sum" usada para saltar a
-                    @ esta funcion, entonces "lr" contiene ese "pc" + 4).
-                    @ el valor de retorno debe quedar en el registro r0.
-                    @ En este caso, r0 es el resultado de r0 + r1.
-
-        @ Otras alternativas para el retorno
-        @ mov pc,lr
-        @ bx lr
-        @ push {lr} ... pop {pc}
-
+	asm_productoEscalar16:
+		asm_prod16_loop:
+			ldr r4, [r0], #2
+			mul r4, r3
+			str r4, [r1], #2
+			subs r2, 1
+			bne asm_prod16_loop
+		bx lr
