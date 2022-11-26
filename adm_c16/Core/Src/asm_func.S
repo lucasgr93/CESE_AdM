@@ -77,12 +77,14 @@
 .thumb_func
 	asm_productoEscalar32:
 		asm_prod32_loop:
-			ldr r4, [r0], #4
-			mul r4, r3
-			str r4, [r1], #4
-			subs r2, 1
-			bne asm_prod32_loop
-		bx lr
+			push {r4}			@Guarda el valor de r4 en el Stack
+			ldr r4, [r0], #4	@Carga el contenido de la dirección apuntada por r0 en r4 e incrementa r0 en 4 bytes
+			mul r4, r3			@Multiplica el contenido de r4 por el contenido de r3 y almacena el resultado en r4
+			str r4, [r1], #4	@Guarda el contenido de r4 en la dirección apuntada por r1 e incrementa r1 en 4 bytes
+			subs r2, 1			@Resta una unidad al valor contenido en r2 y actualiza los flags de estado
+			bne asm_prod32_loop	@Comprueba el flag de estado Z y produce un salto cuando no se pone en 1
+			pop {r4}			@Recupera el valor de r4 almacenado en el Stack
+		bx lr					@Retorna a la función main
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ Prototipo en "C":
@@ -97,9 +99,11 @@
 .thumb_func
 	asm_productoEscalar16:
 		asm_prod16_loop:
-			ldr r4, [r0], #2
-			mul r4, r3
-			str r4, [r1], #2
-			subs r2, 1
-			bne asm_prod16_loop
-		bx lr
+			push {r4}			@Guarda el valor de r4 en el Stack
+			ldr r4, [r0], #2	@Carga el contenido de la dirección apuntada por r0 en r4 e incrementa en 2 bytes r0
+			mul r4, r3			@Multiplica el contenido de r4 por el contenido de r3 y almacena el resultado en r4
+			str r4, [r1], #2	@Guarda el contenido de r4 en la dirección apuntada por r1 e incrementa r1 en 2 bytes
+			subs r2, 1			@Resta una unidad al valor contenido en r2 y actualiza los flags de estado
+			bne asm_prod16_loop	@Comprueba el flag de estado Z y produce un salto cuando no se pone en 1
+			pop {r4}			@Recupera el valor de r4 almacenado en el Stack
+		bx lr					@Retorna a la función main
