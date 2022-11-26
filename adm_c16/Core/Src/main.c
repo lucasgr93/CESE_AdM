@@ -178,7 +178,13 @@ int main(void)
 
   productoEscalar32(vectorIn32, vectorOut32, ARRAY_LENGTH, escalar);
 
-  productoEscalar16(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
+  asm_zeros(vectorOut32, ARRAY_LENGTH);
+
+  asm_productoEscalar32(vectorIn32, vectorOut32, ARRAY_LENGTH, escalar);
+
+  asm_zeros(vectorOut32, ARRAY_LENGTH);
+
+  productoEscalar16((uint16_t*)vectorIn32, (uint16_t*)vectorOut32, ARRAY_LENGTH, escalar);
 
   escalar = 2;
 
