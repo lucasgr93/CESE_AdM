@@ -57,10 +57,11 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 /* USER CODE BEGIN PV */
 
 uint32_t vector[ARRAY_LENGTH];
-uint32_t vectorIn32[ARRAY_LENGTH] = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
+uint32_t vectorIn32[ARRAY_LENGTH] = {10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000};
 uint32_t vectorOut32[ARRAY_LENGTH];
 uint16_t vectorIn16[ARRAY_LENGTH] = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
 uint16_t vectorOut16[ARRAY_LENGTH];
+int32_t  vectorMax32[ARRAY_LENGTH] = {587, 324, 978, 452, 1205, 244, 123, 657, 502, 845};
 uint32_t longitud = 0;
 uint32_t escalar = 0;
 
@@ -78,6 +79,9 @@ static void zeros (uint32_t * vector, uint32_t longitud);
 static void productoEscalar32 (uint32_t * vectorIn, uint32_t * vectorOut, uint32_t longitud, uint32_t escalar);
 static void productoEscalar16 (uint16_t * vectorIn, uint16_t * vectorOut, uint32_t longitud, uint16_t escalar);
 static void productoEscalar12 (uint16_t * vectorIn, uint16_t * vectorOut, uint32_t longitud, uint16_t escalar);
+static void filtroVentana10 (uint16_t * vectorIn, uint16_t * vectorOut, uint32_t longitud);
+static void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitud);
+static int32_t max (int32_t * vectorIn, uint32_t longitud);
 
 /* USER CODE END PFP */
 
@@ -184,13 +188,19 @@ int main(void)
 
   asm_zeros(vectorOut32, ARRAY_LENGTH);
 
-  asm_productoEscalar16(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
+  //asm_productoEscalar16(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
 
   //productoEscalar16(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
 
+  asm_pack32to16(vectorIn32, vectorOut16, ARRAY_LENGTH);
+
   escalar = 2;
 
-  productoEscalar12(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
+  //asm_productoEscalar12(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
+
+  asm_filtroVentana10(vectorIn16, vectorOut16, ARRAY_LENGTH);
+
+  int32_t maxValue = asm_max(vectorMax32, ARRAY_LENGTH);
 
 
 
@@ -464,6 +474,48 @@ static void productoEscalar12 (uint16_t * vectorIn, uint16_t * vectorOut, uint32
 			vectorOut[i] = (vectorIn[i] * escalar) <= 4095 ? (vectorIn[i] * escalar) : 4095;
 		}
 	}
+}
+
+static void filtroVentana10 (uint16_t * vectorIn, uint16_t * vectorOut, uint32_t longitud)
+{
+	uint32_t suma;
+	uint16_t promedio;
+	for(uint32_t i=0; i<longitud; i++)
+	{
+		suma = 0;
+		promedio = 0;
+		uint32_t cont = 0;
+		for(int32_t j=-5; j<=5; j++)
+		{
+			int32_t k = i + j;
+			if(k >= 0 && k <longitud)
+			{
+				suma += vectorIn[k];
+				cont++;
+			}
+		}
+		promedio = suma / cont;
+		vectorOut[i] = promedio;
+	}
+}
+
+void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitud)
+{
+	for(uint32_t i=0; i<longitud; i++)
+	{
+		vectorOut[i] = vectorIn[i]>>16;
+	}
+}
+
+int32_t max (int32_t * vectorIn, uint32_t longitud)
+{
+	int32_t maxValue = 0;
+	for(uint32_t i=0; i<longitud; i++)
+	{
+		if(maxValue < vectorIn[i]) maxValue = vectorIn[i];
+	}
+
+	return maxValue;
 }
 /* USER CODE END 4 */
 
