@@ -82,6 +82,8 @@ static void productoEscalar12 (uint16_t * vectorIn, uint16_t * vectorOut, uint32
 static void filtroVentana10 (uint16_t * vectorIn, uint16_t * vectorOut, uint32_t longitud);
 static void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitud);
 static int32_t max (int32_t * vectorIn, uint32_t longitud);
+static void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, uint32_t N);
+static void invertir (uint16_t * vector, uint32_t longitud);
 
 /* USER CODE END PFP */
 
@@ -192,13 +194,19 @@ int main(void)
 
   //productoEscalar16(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
 
-  asm_pack32to16(vectorIn32, vectorOut16, ARRAY_LENGTH);
+  //asm_pack32to16(vectorIn32, vectorOut16, ARRAY_LENGTH);
+
+  uint32_t N = 5;
+
+  asm_downsampleM(vectorIn32, vectorOut32, ARRAY_LENGTH, N);
 
   escalar = 2;
 
   //asm_productoEscalar12(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
 
-  asm_filtroVentana10(vectorIn16, vectorOut16, ARRAY_LENGTH);
+  //asm_filtroVentana10(vectorIn16, vectorOut16, ARRAY_LENGTH);
+
+  asm_invertir(vectorIn16, ARRAY_LENGTH);
 
   int32_t maxValue = asm_max(vectorMax32, ARRAY_LENGTH);
 
@@ -517,6 +525,32 @@ int32_t max (int32_t * vectorIn, uint32_t longitud)
 
 	return maxValue;
 }
+
+void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, uint32_t N)
+{
+	for(uint32_t i=0, j=0; i<longitud; i++)
+	{
+		if(i != N)
+		{
+			vectorOut[j] = vectorIn[i];
+			j++;
+		}
+	}
+}
+
+void invertir (uint16_t * vector, uint32_t longitud)
+{
+	uint16_t aux;
+
+	for(uint32_t i=0; i<longitud/2; i++)
+	{
+		aux = vector[longitud - i - 1];
+		vector[longitud - i - 1] = vector[i];
+		vector[i] = aux;
+	}
+}
+
+
 /* USER CODE END 4 */
 
 /**

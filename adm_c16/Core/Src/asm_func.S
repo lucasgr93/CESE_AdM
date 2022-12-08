@@ -12,6 +12,8 @@
 .global asm_filtroVentana10
 .global asm_pack32to16
 .global asm_max
+.global asm_downsampleM
+.global asm_invertir
 
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -210,21 +212,67 @@
 @
 .thumb_func
 	asm_max:
-	mov r2, #0
-	ldr r3, [r0]
-	asm_max_loop:
-		cmp r2, r3
-		it lt
-		ldrlt r2, [r0]		@Guarda el valor almacenado en la dirección apuntada por r0 en r2
-		subs r1, #1
-		it ne
-		ldrne r3, [r0, #4]!
-		bne asm_max_loop
-	mov r0, r2
-	bx lr
+		mov r2, #0
+		ldr r3, [r0]
+		asm_max_loop:
+			cmp r2, r3
+			it lt
+			ldrlt r2, [r0]
+			subs r1, #1
+			it ne
+			ldrne r3, [r0, #4]!
+			bne asm_max_loop
+		mov r0, r2
+		bx lr
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ Prototipo en "C":
+@   void asm_downsampleM (int32_t* vectorIn, int32_t* vectorOut, uint32_t longitud, uint32_t N)
+@
+@ Parametros recibidos:
+@   r0: &vectorIn
+@	r1: &vectorOut
+@	r2: longitud
+@	r3: N
+@
+.thumb_func
+	asm_downsampleM:
+		push {r4-r5}
+		mov r4, #0
+		asm_dsM_loop:
+			ldr r5, [r0], #4
+			cmp r4, r3
+			it ne
+			strne r5, [r1], #4
+			subs r2, #1
+			add r4, #1
+			bne asm_dsM_loop
+		pop {r4-r5}
+		bx lr
 
-
-
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ Prototipo en "C":
+@   void asm_invertir (uint16_t * vector, uint32_t longitud)
+@
+@ Parametros recibidos:
+@   r0: &vector
+@	r1: longitud
+@
+.thumb_func
+	asm_invertir:
+		push {r4}
+		mov r4, #0
+		sub r1, #1
+		asm_inv_loop:
+			ldrh r2, [r0, r4, LSL #1]
+			ldrh r3, [r0, r1, LSL #1]
+			strh r2, [r0, r1, LSL #1]
+			strh r3, [r0, r4, LSL #1]
+			add r4, #1
+			sub r1, #1
+			cmp r4, r1
+			blt asm_inv_loop
+		pop {r4}
+		bx lr
 
 
