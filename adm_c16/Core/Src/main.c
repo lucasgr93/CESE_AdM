@@ -528,11 +528,11 @@ int32_t max (int32_t * vectorIn, uint32_t longitud)
 
 void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, uint32_t N)
 {
-	for(uint32_t i=0, j=0; i<longitud; i++)
+	for(uint32_t i=1, j=0; i<=longitud; i++)
 	{
-		if(i != N)
+		if( (i % N) != 0 )
 		{
-			vectorOut[j] = vectorIn[i];
+			vectorOut[j] = vectorIn[i-1];
 			j++;
 		}
 	}

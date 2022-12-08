@@ -238,14 +238,14 @@
 .thumb_func
 	asm_downsampleM:
 		push {r4-r5}
-		mov r4, #0
+		mov r4, r3
 		asm_dsM_loop:
+			subs r4, #1
 			ldr r5, [r0], #4
-			cmp r4, r3
-			it ne
+			ite ne
 			strne r5, [r1], #4
+			moveq r4, r3
 			subs r2, #1
-			add r4, #1
 			bne asm_dsM_loop
 		pop {r4-r5}
 		bx lr
