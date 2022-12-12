@@ -1,0 +1,38 @@
+Ejercicio 4
+
+Debug
+asm sin sat: 133 ciclos
+asm con sat: 123
+C: 532 ciclos
+
+Release
+asm sin sat: 112 ciclos
+asm con sat: 102 ciclos
+C: 114 ciclos
+
+Ejercicio 5
+
+Debug
+asm: 1422 ciclos
+C: 5843 ciclos
+
+Release
+asm: 1411 ciclos
+C:1233 ciclos
+
+Ejercicio 11
+
+Debug
+asm con SIMD: 2287 ciclos
+asm sin SIMD: 2597 ciclos
+C: 9272 ciclos
+
+Release
+asm con SIMD: 2280 ciclos
+asm sin SIMD: 2585 ciclos
+C: 2179 ciclos
+
+
+C: {1000, 2900, 5600, 9000, 13000, 17500, 22400, 27600, 33000, 38500, 33000, 27600, 22400, 17500, 13000, 9000, 5600, 2900, 1000, 0}
+A: {1000, 2900, 5600, 9000, 13000, 17500, 22400, 27600, 33000, 38500, 33000, 27600, 22400, 17500, 13000, 9000, 5600, 2900, 1000, 0}
+B: {1000, 2900, 5600, 9000, 13000, 17500, 22400, 27600, 33000, 38500, 33000, 27600, 22400, 17500, 13000, 9000, 5600, 2900, 1000, 0}

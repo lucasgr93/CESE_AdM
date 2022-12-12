@@ -14,6 +14,8 @@
 .global asm_max
 .global asm_downsampleM
 .global asm_invertir
+.global asm_corr_simd
+.global asm_corr
 
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -131,10 +133,10 @@
 		asm_prod12_loop:
 			ldrh r4, [r0], #2	@Carga el contenido de la dirección apuntada por r0 en r4 e incrementa en 2 bytes r0
 			mul r4, r3			@Multiplica el contenido de r4 por el contenido de r3 y almacena el resultado en r4
-			//usat r4, 12, r4	@Satura el valor contenido en r4 a 12 bits
-			cmp r4, r5			@Compara el valor de r4 con el valor de r5
-			it gt				@Inicia el bloque IF-THEN
-			movgt r4, r5		@Si el valor de r4 es mayor a r5, copia el valor de r5 en r4
+			usat r4, 12, r4		@Satura el valor contenido en r4 a 12 bits
+			//cmp r4, r5		@Compara el valor de r4 con el valor de r5
+			//it gt				@Inicia el bloque IF-THEN
+			//movgt r4, r5		@Si el valor de r4 es mayor a r5, copia el valor de r5 en r4
 			strh r4, [r1], #2	@Guarda el contenido de r4 en la dirección apuntada por r1 e incrementa r1 en 2 bytes
 			subs r2, 1			@Resta una unidad al valor contenido en r2 y actualiza los flags de estado
 			bne asm_prod12_loop	@Comprueba el flag de estado Z y produce un salto cuando no se pone en 1
@@ -274,5 +276,100 @@
 			blt asm_inv_loop
 		pop {r4}
 		bx lr
+/*
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ Prototipo en "C":
+@   void asm_corr_simd (int16_t * x, int16_t * y, int32_t * r, int32_t l)
+@
+@ Parametros recibidos:
+@   r0: &x
+@	r1: &y
+@	r2: &r
+@	r3: l
+@
+.thumb_func
+	asm_corr:
+		push {r4-r9}
+		mov r4, #1							@r4 = delay
+		sub r4, r3
+		asm_corr_loop1:
+			mov r5, #0						@r5 = xy
+			mov r6, #0						@r6 = i
+			asm_corr_loop2:
+				add r7, r6, r4				@r7 = j; j = i + delay
+				cmp r7, #0
+				blt asm_corr_loop2end		@Si j < 0, salta al final del loop2
+				cmp r7, r3					@Compara r7 con r3
+				bge asm_corr_loop2end		@Si r7 es mayor que r3, salta al final del loop2
+				sub r8, r3, r6
+				cmp r8, #1
+				ite gt
+				ldrgt r8, [r0, r6, LSL #1]	@Carga r8 con dos elementos de x a la vez
+				ldrhle r8, [r0, r6, LSL #1]
+				sub r9, r3, r7
+				cmp r9, #1
+				ite gt
+				ldrgt r9, [r1, r7, LSL #1]	@Carga r9 con dos elementos de y a la vez
+				ldrhle r9, [r1, r7, LSL #1]
+				smuad r8, r9, r8			@Multiplica dos elementos correspondientes de 16 bits y los acumula en r8
+				add r5, r8					@ r5 = r5 + r8
+				add r6, #2
+				cmp r6, r3
+				blt asm_corr_loop2
+			asm_corr_loop2end:
+				add r6, #1
+				cmp r6, r3					@Compara r6 con r3
+				blt asm_corr_loop2			@Si r6 es menor que r3 continua en el bucle loop2
+		asm_corr_loop1end:
+			str r5, [r2], #4
+			add r4, #1
+			cmp r4, r3						@Compara r4 con r3
+			blt asm_corr_loop1				@Si r4 es menor que r3 continua en el loop1
+		pop {r4-r9}
+		bx lr
+*/
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ Prototipo en "C":
+@   void asm_corr (int16_t * x, int16_t * y, int32_t * r, int32_t l)
+@
+@ Parametros recibidos:
+@   r0: &x
+@	r1: &y
+@	r2: &r
+@	r3: l
+@
+.thumb_func
+	asm_corr:
+		push {r4-r9}
+		mov r4, #1							@r4 = delay
+		sub r4, r3
+		asm_corr_loop1:
+			mov r5, #0						@r5 = xy
+			mov r6, #0						@r6 = i
+			asm_corr_loop2:
+				add r7, r6, r4				@r7 = j; j = i + delay
+				cmp r7, #0
+				blt asm_corr_loop2end		@Si j < 0, salta al final del loop2
+				cmp r7, r3					@Compara r7 con r3
+				bge asm_corr_loop2end		@Si r7 es mayor que r3, salta al final del loop2
+				ldrh r8, [r0, r6, LSL #1]
+				ldrh r9, [r1, r7, LSL #1]
+				mla r5, r8, r9, r5			@Multiplica dos elementos correspondientes de 16 bits y los acumula en r8
+				add r6, #1
+				cmp r6, r3
+				blt asm_corr_loop2
+			asm_corr_loop2end:
+				add r6, #1
+				cmp r6, r3					@Compara r6 con r3
+				blt asm_corr_loop2			@Si r6 es menor que r3 continua en el bucle loop2
+		asm_corr_loop1end:
+			str r5, [r2], #4
+			add r4, #1
+			cmp r4, r3						@Compara r4 con r3
+			blt asm_corr_loop1				@Si r4 es menor que r3 continua en el loop1
+		pop {r4-r9}
+		bx lr
+
+
 
 

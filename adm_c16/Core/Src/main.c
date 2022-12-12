@@ -61,6 +61,9 @@ uint32_t vectorIn32[ARRAY_LENGTH] = {10000, 20000, 30000, 40000, 50000, 60000, 7
 uint32_t vectorOut32[ARRAY_LENGTH];
 uint16_t vectorIn16[ARRAY_LENGTH] = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
 uint16_t vectorOut16[ARRAY_LENGTH];
+int16_t  vectorX[ARRAY_LENGTH] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+int16_t  vectorY[ARRAY_LENGTH] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+int32_t  vectorCorr[2*ARRAY_LENGTH];
 int32_t  vectorMax32[ARRAY_LENGTH] = {587, 324, 978, 452, 1205, 244, 123, 657, 502, 845};
 uint32_t longitud = 0;
 uint32_t escalar = 0;
@@ -84,6 +87,7 @@ static void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitu
 static int32_t max (int32_t * vectorIn, uint32_t longitud);
 static void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, uint32_t N);
 static void invertir (uint16_t * vector, uint32_t longitud);
+static void corr (int16_t * x, int16_t * y, int32_t * r, int32_t l);
 
 /* USER CODE END PFP */
 
@@ -168,6 +172,9 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+  // Activa contador de ciclos (iniciar una sola vez)
+  DWT->CTRL |= 1 << DWT_CTRL_CYCCNTENA_Pos;
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -204,11 +211,25 @@ int main(void)
 
   //asm_productoEscalar12(vectorIn16, vectorOut16, ARRAY_LENGTH, escalar);
 
-  //asm_filtroVentana10(vectorIn16, vectorOut16, ARRAY_LENGTH);
+  asm_filtroVentana10(vectorIn16, vectorOut16, ARRAY_LENGTH);
 
   asm_invertir(vectorIn16, ARRAY_LENGTH);
 
   int32_t maxValue = asm_max(vectorMax32, ARRAY_LENGTH);
+
+  // Antes de la función a medir: contador de ciclos a cero
+  DWT->CYCCNT = 0;
+
+  asm_corr(vectorX, vectorY, vectorCorr, 10);
+
+  // Obtiene cantidad de ciclos que demoró la función
+  const volatile uint32_t Ciclos = DWT->CYCCNT;
+
+  char text[10] = {};
+
+  itoa(Ciclos, text, 10);
+
+  HAL_UART_Transmit(&huart3, text, sizeof(text), 1000);
 
 
 
@@ -507,7 +528,7 @@ static void filtroVentana10 (uint16_t * vectorIn, uint16_t * vectorOut, uint32_t
 	}
 }
 
-void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitud)
+static void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitud)
 {
 	for(uint32_t i=0; i<longitud; i++)
 	{
@@ -515,7 +536,7 @@ void pack32to16 (int32_t * vectorIn, int16_t *vectorOut, uint32_t longitud)
 	}
 }
 
-int32_t max (int32_t * vectorIn, uint32_t longitud)
+static int32_t max (int32_t * vectorIn, uint32_t longitud)
 {
 	int32_t maxValue = 0;
 	for(uint32_t i=0; i<longitud; i++)
@@ -526,7 +547,7 @@ int32_t max (int32_t * vectorIn, uint32_t longitud)
 	return maxValue;
 }
 
-void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, uint32_t N)
+static void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, uint32_t N)
 {
 	for(uint32_t i=1, j=0; i<=longitud; i++)
 	{
@@ -538,7 +559,7 @@ void downsampleM (int32_t * vectorIn, int32_t * vectorOut, uint32_t longitud, ui
 	}
 }
 
-void invertir (uint16_t * vector, uint32_t longitud)
+static void invertir (uint16_t * vector, uint32_t longitud)
 {
 	uint16_t aux;
 
@@ -550,6 +571,29 @@ void invertir (uint16_t * vector, uint32_t longitud)
 	}
 }
 
+static void corr (int16_t * x, int16_t * y, int32_t * r, int32_t l)
+{
+	int32_t xy;
+	int32_t delay;
+	uint32_t i,j;
+
+	    for(delay = -l + 1; delay < l; delay++)
+	    {
+	        //Calculate the numerator
+	        xy = 0;
+	        for(i=0; i<l; i++)
+	        {
+	            j = i + delay;
+	            if((j < 0) || (j >= l))  //The series are no wrapped,so the value is ignored
+	                continue;
+	            else
+	            	xy += (x[i] * y[j]);
+	        }
+
+	        //Calculate the correlation series at "delay"
+	        r[delay + l - 1] = xy;
+	    }
+}
 
 /* USER CODE END 4 */
 
